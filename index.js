@@ -24,11 +24,13 @@ let persons = [
 ]
 
 const generatePersonId = () => {
-  const maxId = persons.length > 0
-    ? Math.max(...persons.map(n => n.id))
-    : 0
-
-    return maxId + 1
+  const id = Math.floor(Math.random() * Math.floor(1000))
+  const double = persons.find(p => p.id === id)
+  if (double) {
+    generatePersonId()
+  } else {
+    return id
+  }
 }
 
 app.get('/', (req, res) => {
@@ -38,8 +40,62 @@ app.get('/', (req, res) => {
     `)
 })
 
+app.get('/info/', (req, res) => {
+  res.send(`
+  <p>Phonebook has info for ${persons.length} people</p>
+  <p>${new Date()}</p>
+  <p>Go <a href="../">back to home</a>`)
+})
+
 app.get('/api/persons/', (req, res) => {
   res.json(persons)
+})
+
+app.get('/api/persons/:id', (req, res) => {
+  const id = Number(req.params.id)
+  const person = persons.find(p => p.id === id)
+  if (person) {
+    res.json(person)
+  } else {
+    res.status(404).end()
+  }
+})
+
+app.delete('/api/persons/:id', (req, res) => {
+  const id = Number(req.params.id)
+  persons = persons.filter(person => person.id !== id)
+  res.status(204).end()
+})
+
+app.post('/api/persons/', (req, res) => {
+  const body = req.body
+  if (!body) {
+    return res.status(400).json({
+      error: 'Content missing'
+    })
+  }
+
+  if (!body.name || !body.number) {
+    return res.status(400).json({
+      error: 'Name and number must be provided'
+    })
+  }
+
+  const personExists = persons.find(p => p.name.toLowerCase() === body.name.toLowerCase())
+  if (personExists) {
+    return res.status(400).json({
+      error: `${body.name} already in the Phonebook`
+    })
+  }
+
+  const person = {
+    name: body.name,
+    number: body.number,
+    id: generatePersonId()
+  }
+  persons = persons.concat(person)
+
+  res.json(person)
 })
 
 const PORT = 3001
