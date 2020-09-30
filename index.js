@@ -1,10 +1,14 @@
 const express = require('express')
 const app = express()
+const cors = require('cors')
 
 const morgan = require('morgan')
 
 // Use the Express json parser to add notes that are sent using json format
 app.use(express.json())
+
+// Use CORS to allow Cross-Origin Resource Sharing
+app.use(cors())
 
 
 const logger = function (tokens, req, res) {
