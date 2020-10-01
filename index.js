@@ -73,9 +73,7 @@ const generatePersonId = () => {
 
 app.get('/', (req, res) => {
   res.send(`
-    <h1>Phonebook API is running!</h1>
-    <h3>You can access the list of persons at <a href="http://localhost:3001/api/persons" target="_blank">Local host</a></h3>
-    `)
+    <h1>Phonebook API is running!</h1>`)
 })
 
 app.get('/info/', (req, res) => {
