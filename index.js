@@ -1,6 +1,8 @@
+require('dotenv').config()
 const express = require('express')
 const app = express()
 const cors = require('cors')
+const Person = require('./models/person')
 
 const morgan = require('morgan')
 
@@ -83,19 +85,31 @@ app.get('/info/', (req, res) => {
   <p>Go <a href="../">back to home</a>`)
 })
 
-app.get('/api/persons/', (req, res) => {
-  res.json(persons)
+// app.get('/api/persons/', (req, res) => {
+//   res.json(persons)
+// })
+
+app.get('/api/persons', (request, response) => {
+  Person.find({}).then(persons => {
+    response.json(persons)
+  })
 })
 
-app.get('/api/persons/:id', (req, res) => {
-  const id = Number(req.params.id)
-  const person = persons.find(p => p.id === id)
-  if (person) {
-    res.json(person)
-  } else {
-    res.status(404).end()
-  }
+app.get('/api/persons/:id', (request, response) => {
+  Person.findById(request.params.id).then(person => {
+    response.json(person)
+  })
 })
+
+// app.get('/api/persons/:id', (req, res) => {
+//   const id = Number(req.params.id)
+//   const person = persons.find(p => p.id === id)
+//   if (person) {
+//     res.json(person)
+//   } else {
+//     res.status(404).end()
+//   }
+// })
 
 app.delete('/api/persons/:id', (req, res) => {
   const id = Number(req.params.id)
@@ -103,38 +117,42 @@ app.delete('/api/persons/:id', (req, res) => {
   res.status(204).end()
 })
 
-app.post('/api/persons/', (req, res) => {
-  const body = req.body
+app.post('/api/persons/', (request, response) => {
+  const body = request.body
+  console.log(body)
   if (!body) {
-    return res.status(400).json({
+    return response.status(400).json({
       error: 'Content missing'
     })
   }
 
   if (!body.name || !body.number) {
-    return res.status(400).json({
+    return response.status(400).json({
       error: 'Name and number must be provided'
     })
   }
 
-  const personExists = persons.find(p => p.name.toLowerCase() === body.name.toLowerCase())
-  if (personExists) {
-    return res.status(400).json({
-      error: `${body.name} already in the Phonebook`
-    })
-  }
+  // const personExists = Person.find(p => p.name.toLowerCase() === body.name.toLowerCase())
+  // if (personExists) {
+  //   return res.status(400).json({
+  //     error: `${body.name} already in the Phonebook`
+  //   })
+  // }
 
-  const person = {
+  const person = new Person ({
     name: body.name,
     number: body.number,
-    id: generatePersonId()
-  }
-  persons = persons.concat(person)
+    // id: generatePersonId()
+  })
+  // persons = persons.concat(person)
+  // res.json(person)
 
-  res.json(person)
+  person.save().then(savedPerson => {
+    response.json(savedPerson)
+  })
 })
 
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT
 app.listen(PORT, () => {
   console.log(`Server running on port: ${PORT}`)
   console.log(`If in localhost, access it in: http://localhost:${PORT}/`)
