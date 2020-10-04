@@ -39,25 +39,27 @@ app.use(morgan(logger))
 let persons = [
   {
     id: 1,
-    name: "Arto Helas",
-    number: "040-12345678"
+    name: 'Arto Helas',
+    number: '040-12345678'
   },
   {
     id: 2,
-    name: "John Helas",
-    number: "040-88998877"
+    name: 'John Helas',
+    number: '040-88998877'
   },
   {
     id: 3,
-    name: "Joane Jane",
-    number: "040-123459999"
+    name: 'Joane Jane',
+    number: '040-123459999'
   },
 ]
 
 const generatePersonId = () => {
   const id = Math.floor(Math.random() * Math.floor(1000))
   const double = persons.find(p => p.id === id)
+
   if (double) {
+    // eslint-disable-next-line no-unused-vars
     generatePersonId()
   } else {
     return id
@@ -98,7 +100,7 @@ app.get('/api/persons/:id', (request, response, next) => {
 
 app.delete('/api/persons/:id', (request, response, next) => {
   Person.findByIdAndDelete(request.params.id)
-    .then(result => {
+    .then(() => {
       response.status(204).end()
     })
     .catch(error => next(error))
@@ -165,6 +167,7 @@ const errorHandler = (error, request, response, next) => {
 }
 app.use(errorHandler)
 
+// eslint-disable-next-line no-undef
 const PORT = process.env.PORT
 app.listen(PORT, () => {
   console.log(`Server running on port: ${PORT}`)

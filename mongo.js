@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 // Simple Mongo file to start using the Collection
 const mongoose = require('mongoose')
 
@@ -30,7 +31,7 @@ if (process.argv.length === 5) {
     number: process.argv[4]
   })
 
-  person.save().then(result => {
+  person.save().then(() => {
     console.log(`Added ${process.argv[3]} number ${process.argv[4]} to phonebook`)
     mongoose.connection.close()
   })
@@ -44,6 +45,6 @@ if (process.argv.length === 3) {
       result.forEach(person => {
         console.log(`${person.name} ${person.number}`)
       })
-    mongoose.connection.close()
-  })
+      mongoose.connection.close()
+    })
 }
