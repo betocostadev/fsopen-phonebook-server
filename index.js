@@ -6,9 +6,9 @@ const Person = require('./models/person')
 
 const morgan = require('morgan')
 
+app.use(express.static('build'))
 // Use the Express json parser to add notes that are sent using json format
 app.use(express.json())
-
 // Use CORS to allow Cross-Origin Resource Sharing
 app.use(cors())
 
@@ -26,8 +26,6 @@ const logger = function (tokens, req, res) {
 
 app.use(morgan(logger))
 
-app.use(express.static('build'))
-
 // const requestLogger = (request, response, next) => {
 //   console.log('Method:', request.method)
 //   console.log('Path:  ', request.path)
@@ -37,13 +35,6 @@ app.use(express.static('build'))
 // }
 
 // app.use(requestLogger)
-
-// const unknownEndpoint = (request, response) => {
-//   response.status(404).send({ error: 'unknown endpoint' })
-// }
-
-// app.use(unknownEndpoint)
-
 
 let persons = [
   {
@@ -73,21 +64,17 @@ const generatePersonId = () => {
   }
 }
 
-app.get('/', (req, res) => {
-  res.send(`
+app.get('/', (request, response) => {
+  response.send(`
     <h1>Phonebook API is running!</h1>`)
 })
 
-app.get('/info/', (req, res) => {
-  res.send(`
+app.get('/info/', (request, response) => {
+  response.send(`
   <p>Phonebook has info for ${persons.length} people</p>
   <p>${new Date()}</p>
   <p>Go <a href="../">back to home</a>`)
 })
-
-// app.get('/api/persons/', (req, res) => {
-//   res.json(persons)
-// })
 
 app.get('/api/persons', (request, response) => {
   Person.find({}).then(persons => {
@@ -95,26 +82,24 @@ app.get('/api/persons', (request, response) => {
   })
 })
 
-app.get('/api/persons/:id', (request, response) => {
-  Person.findById(request.params.id).then(person => {
-    response.json(person)
-  })
+app.get('/api/persons/:id', (request, response, next) => {
+  Person.findById(request.params.id)
+    .then(person => {
+      if (person) {
+        response.json(person)
+      } else {
+        response.status(404).end()
+      }
+    })
+    .catch(error => next(error))
 })
 
-// app.get('/api/persons/:id', (req, res) => {
-//   const id = Number(req.params.id)
-//   const person = persons.find(p => p.id === id)
-//   if (person) {
-//     res.json(person)
-//   } else {
-//     res.status(404).end()
-//   }
-// })
-
-app.delete('/api/persons/:id', (req, res) => {
-  const id = Number(req.params.id)
-  persons = persons.filter(person => person.id !== id)
-  res.status(204).end()
+app.delete('/api/persons/:id', (request, response, next) => {
+  Person.findByIdAndDelete(request.params.id)
+    .then(result => {
+      response.status(204).end()
+    })
+    .catch(error => next(error))
 })
 
 app.post('/api/persons/', (request, response) => {
@@ -132,28 +117,48 @@ app.post('/api/persons/', (request, response) => {
     })
   }
 
-  // const personExists = Person.find(p => p.name.toLowerCase() === body.name.toLowerCase())
-  // if (personExists) {
-  //   return res.status(400).json({
-  //     error: `${body.name} already in the Phonebook`
-  //   })
-  // }
-
   const person = new Person ({
     name: body.name,
     number: body.number,
-    // id: generatePersonId()
   })
-  // persons = persons.concat(person)
-  // res.json(person)
 
   person.save().then(savedPerson => {
     response.json(savedPerson)
   })
 })
 
+app.put('/api/persons/:id', (request, response, next) => {
+  const body = request.body
+
+  const person = {
+    number: body.number,
+  }
+
+  Person.findByIdAndUpdate(request.params.id, person, { new: true })
+    .then(updatedPerson => {
+      response.json(updatedPerson)
+    })
+    .catch(error => next(error))
+})
+
+
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: 'unknown endpoint' })
+}
+app.use(unknownEndpoint)
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' })
+  }
+
+  next(error)
+}
+app.use(errorHandler)
+
 const PORT = process.env.PORT
 app.listen(PORT, () => {
   console.log(`Server running on port: ${PORT}`)
-  console.log(`If in localhost, access it in: http://localhost:${PORT}/`)
 })
